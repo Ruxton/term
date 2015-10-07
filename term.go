@@ -8,6 +8,7 @@ import (
   "encoding/base64"
   "net/http"
   "io/ioutil"
+  "sync"
 )
 
 const (
@@ -40,18 +41,28 @@ const (
   ImageURL = "\033]1338;url=%s;alt=%s"
 )
 
+var ERR_MUTEX sync.Mutex
+var MESSAGE_MUTEX sync.Mutex
+
 var STD_OUT = bufio.NewWriter(colorable.NewColorableStdout())
 var STD_ERR = bufio.NewWriter(colorable.NewColorableStderr())
 var STD_IN = bufio.NewReader(os.Stdin)
 
+
 func OutputError(message string) {
-	STD_ERR.WriteString(Bold + Red + message + Reset + "\n")
-	STD_ERR.Flush()
+  if(message != "") {
+    ERR_MUTEX.Lock()
+    STD_ERR.WriteString(Bold + Red + message + Reset + "\n")
+  	STD_ERR.Flush()
+    ERR_MUTEX.Unlock()
+  }
 }
 
 func OutputMessage(message string) {
+  MESSAGE_MUTEX.Lock()
 	STD_OUT.WriteString(message)
 	STD_OUT.Flush()
+  MESSAGE_MUTEX.Unlock()
 }
 
 func OutputImageUrl(url string,alt string) {
