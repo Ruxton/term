@@ -9,6 +9,8 @@ import (
   "net/http"
   "io/ioutil"
   "sync"
+  "time"
+  "math/rand"
 )
 
 const (
@@ -39,10 +41,23 @@ const (
   Newline = "\r\n\x1B[0m"
   ImageBASE64 = "\033]1337;File=name=%s;inline=1;width=100px;height=auto:%s\a\n"
   ImageURL = "\033]1338;url=%s;alt=%s"
+  CURSORBACK = "\033[1D"
+  CURSORHIDE = "\033[?25l"
+  CURSORSHOW = "\033[?25h"
 )
 
 var ERR_MUTEX sync.Mutex
 var MESSAGE_MUTEX sync.Mutex
+
+var THROBBERS = [][]string{
+      []string{"⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧","⠇","⠏"},
+      []string{"⠋","⠙","⠚","⠞","⠖","⠦","⠴","⠲","⠳","⠓"},
+      []string{"⠄","⠆","⠇","⠋","⠙","⠸","⠰","⠠","⠰","⠸","⠙","⠋","⠇","⠆"},
+      []string{"⠋","⠙","⠚","⠒","⠂","⠂","⠒","⠲","⠴","⠦","⠖","⠒","⠐","⠐","⠒","⠓","⠋"},
+      []string{"⠁","⠉","⠙","⠚","⠒","⠂","⠂","⠒","⠲","⠴","⠤","⠄","⠄","⠤","⠴","⠲","⠒","⠂","⠂","⠒","⠚","⠙","⠉","⠁"},
+      []string{"⠈","⠉","⠋","⠓","⠒","⠐","⠐","⠒","⠖","⠦","⠤","⠠","⠠","⠤","⠦","⠖","⠒","⠐","⠐","⠒","⠓","⠋","⠉","⠈"},
+      []string{"⠁","⠁","⠉","⠙","⠚","⠒","⠂","⠂","⠒","⠲","⠴","⠤","⠄","⠄","⠤","⠠","⠠","⠤","⠦","⠖","⠒","⠐","⠐","⠒","⠓","⠋","⠉","⠈","⠈","⠉"},
+    }
 
 var STD_OUT = bufio.NewWriter(colorable.NewColorableStdout())
 var STD_ERR = bufio.NewWriter(colorable.NewColorableStderr())
@@ -56,6 +71,22 @@ func OutputError(message string) {
   	STD_ERR.Flush()
     ERR_MUTEX.Unlock()
   }
+}
+
+func Throbber() {
+  r := rand.New(rand.NewSource(time.Now().UnixNano()))
+  throb := THROBBERS[r.Intn(len(THROBBERS))]
+
+  i := r.Intn(len(throb))
+
+  OutputMessage(" ")
+  OutputMessage(CURSORHIDE)
+  for {
+    i = (i + 1) % len(throb)
+    OutputMessage(CURSORBACK+throb[i])
+    time.Sleep(100 * time.Millisecond)
+  }
+  OutputMessage(CURSORSHOW)
 }
 
 func OutputMessage(message string) {
