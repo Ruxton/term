@@ -42,6 +42,8 @@ const (
   ImageBASE64 = "\033]1337;File=name=%s;inline=1;width=100px;height=auto:%s\a\n"
   ImageURL = "\033]1338;url=%s;alt=%s"
   CURSORBACK = "\033[1D"
+  CURSORUP = "\033[1A"
+  CURSORDOWN = "\033[1B"
   CURSORHIDE = "\033[?25l"
   CURSORSHOW = "\033[?25h"
 )
@@ -73,6 +75,10 @@ func OutputError(message string) {
   }
 }
 
+func OutputErrorf(message string, a ...interface{}) {
+  OutputError(fmt.Sprintf(message,a...))
+}
+
 func Throbber() {
   r := rand.New(rand.NewSource(time.Now().UnixNano()))
   throb := THROBBERS[r.Intn(len(THROBBERS))]
@@ -96,6 +102,10 @@ func OutputMessage(message string) {
   MESSAGE_MUTEX.Unlock()
 }
 
+func OutputMessagef(message string, a ...interface{}) {
+  OutputMessage(fmt.Sprintf(message,a...))
+}
+
 func OutputImageUrl(url string,alt string) {
   client := http.Client{}
   req, err := http.NewRequest("GET", url, nil)
@@ -103,10 +113,10 @@ func OutputImageUrl(url string,alt string) {
     OutputError(fmt.Sprintf("Error - %s",err.Error()))
   }
   resp, doError := client.Do(req)
-  defer resp.Body.Close()
   if doError != nil {
     OutputError("Error - "+doError.Error())
   }
+  defer resp.Body.Close()
 
   body, err := ioutil.ReadAll(resp.Body)
   if err != nil {
